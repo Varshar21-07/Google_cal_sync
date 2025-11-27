@@ -1,0 +1,43 @@
+{% extends "google_cal_sync/base.html" %}
+
+{% block title %}Create Event • Calendar Sync{% endblock %}
+
+{% block header %}Create Google Calendar Event{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <div class="panel-header">
+        <h3>Quick Create</h3>
+        <span>Send this form directly to Google Calendar</span>
+    </div>
+    <form class="event-form">
+        <label>
+            Title
+            <input type="text" name="title" placeholder="e.g., Sprint Planning" required>
+        </label>
+        <label>
+            Description
+            <textarea name="description" rows="3" placeholder="Agenda, notes, meeting link"></textarea>
+        </label>
+        <div class="two-col">
+            <label>
+                Start Time
+                <input type="datetime-local" name="start_time" required>
+            </label>
+            <label>
+                End Time
+                <input type="datetime-local" name="end_time" required>
+            </label>
+        </div>
+        <label>
+            Location / Meet Link
+            <input type="text" name="location" placeholder="Conference Room or meet.google.com/...">
+        </label>
+        <div class="form-actions">
+            <button type="button" class="ghost-btn">Cancel</button>
+            <button type="submit" class="primary-btn">Create Event</button>
+        </div>
+    </form>
+</section>
+{% endblock %}
+

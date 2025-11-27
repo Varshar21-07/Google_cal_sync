@@ -1,0 +1,38 @@
+{% extends "google_cal_sync/base.html" %}
+
+{% block title %}Upcoming Events • Calendar Sync{% endblock %}
+
+{% block header %}Upcoming Schedule{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <div class="panel-header">
+        <h3>Next 7 Days</h3>
+        <button class="ghost-btn">Sync Now</button>
+    </div>
+    <ul class="event-list detailed">
+        <li>
+            <div>
+                <p>Standup Catch-up</p>
+                <span>Mon • 9:00 AM · 15 min</span>
+            </div>
+            <span class="event-chip">Calendar</span>
+        </li>
+        <li>
+            <div>
+                <p>Product Spec Review</p>
+                <span>Tue • 1:00 PM · Meet</span>
+            </div>
+            <span class="event-chip warning">Pending</span>
+        </li>
+        <li>
+            <div>
+                <p>Community Webinar</p>
+                <span>Thu • 5:30 PM · Public</span>
+            </div>
+            <span class="event-chip">Auto Synced</span>
+        </li>
+    </ul>
+</section>
+{% endblock %}
+

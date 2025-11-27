@@ -1,0 +1,29 @@
+{% extends "google_cal_sync/base.html" %}
+
+{% block title %}Settings • Calendar Sync{% endblock %}
+
+{% block header %}Workspace Settings{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <div class="panel-header">
+        <h3>Google Account</h3>
+        <span>Manage connected identity and scopes</span>
+    </div>
+    <div class="settings-row">
+        <div>
+            <p class="settings-label">Primary Calendar</p>
+            <p class="settings-value">designer@example.com</p>
+        </div>
+        <button class="ghost-btn">Switch Account</button>
+    </div>
+    <div class="settings-row">
+        <div>
+            <p class="settings-label">Token Status</p>
+            <p class="settings-value ok">Active · Refreshes automatically</p>
+        </div>
+        <button class="ghost-btn">Revoke Access</button>
+    </div>
+</section>
+{% endblock %}
+

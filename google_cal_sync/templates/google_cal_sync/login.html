@@ -1,0 +1,32 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login • Calendar Sync</title>
+    <link rel="stylesheet" href="{% static 'google_cal_sync/styles.css' %}">
+</head>
+<body class="login-body">
+    <section class="login-card">
+        <div class="login-brand">
+            <span class="logo-icon">GC</span>
+            <div>
+                <p class="brand-subtitle">Welcome back</p>
+                <h1 class="brand-title">Calendar Sync Hub</h1>
+            </div>
+        </div>
+        <p class="login-copy">
+            Connect your Google account to automatically sync meetings, classes, and reminders.
+        </p>
+        <button class="google-btn">
+            <img src="https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png" alt="Google logo">
+            Continue with Google
+        </button>
+        <p class="login-hint">
+            We only request read/write access to your calendar when you approve the OAuth prompt.
+        </p>
+    </section>
+</body>
+</html>
+

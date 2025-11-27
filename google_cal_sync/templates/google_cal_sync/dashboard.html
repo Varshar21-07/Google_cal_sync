@@ -1,0 +1,47 @@
+{% extends "google_cal_sync/base.html" %}
+
+{% block title %}Dashboard • Calendar Sync{% endblock %}
+
+{% block header %}Today&apos;s Overview{% endblock %}
+
+{% block content %}
+<section class="cards-grid">
+    <article class="info-card">
+        <p class="info-label">Next Meeting</p>
+        <h2 class="info-value">Product Sync • 10:00 AM</h2>
+        <p class="info-meta">Google Meet · 30 min</p>
+    </article>
+    <article class="info-card">
+        <p class="info-label">Events Today</p>
+        <h2 class="info-value">5</h2>
+        <p class="info-meta">2 remaining for the day</p>
+    </article>
+    <article class="info-card">
+        <p class="info-label">Sync Status</p>
+        <h2 class="info-value ok">Connected</h2>
+        <p class="info-meta">Last sync · 2 mins ago</p>
+    </article>
+</section>
+
+<section class="panel">
+    <div class="panel-header">
+        <h3>Upcoming Events</h3>
+        <button class="ghost-btn">Refresh</button>
+    </div>
+    <ul class="event-list">
+        <li>
+            <p>Design Review</p>
+            <span>11:30 AM · Room 401</span>
+        </li>
+        <li>
+            <p>Client Demo</p>
+            <span>2:00 PM · Meet link</span>
+        </li>
+        <li>
+            <p>Team Retro</p>
+            <span>4:30 PM · Conference</span>
+        </li>
+    </ul>
+</section>
+{% endblock %}
+

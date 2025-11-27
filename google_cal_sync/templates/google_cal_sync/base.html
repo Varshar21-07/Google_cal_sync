@@ -1,0 +1,43 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Google Calendar Sync{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'google_cal_sync/styles.css' %}">
+</head>
+<body>
+    <div class="layout">
+        <aside class="side-menu">
+            <div class="logo">
+                <span class="logo-icon">GC</span>
+                <span class="logo-text">Calendar Sync</span>
+            </div>
+            <nav>
+                {% with request.resolver_match.url_name as current %}
+                <a href="{% url 'google_cal_sync:dashboard' %}" class="nav-link {% if current == 'dashboard' %}active{% endif %}">Dashboard</a>
+                <a href="{% url 'google_cal_sync:create_event' %}" class="nav-link {% if current == 'create_event' %}active{% endif %}">Create Event</a>
+                <a href="{% url 'google_cal_sync:upcoming_events' %}" class="nav-link {% if current == 'upcoming_events' %}active{% endif %}">Upcoming Events</a>
+                <a href="{% url 'google_cal_sync:settings' %}" class="nav-link {% if current == 'settings' %}active{% endif %}">Settings</a>
+                {% endwith %}
+            </nav>
+            <button class="logout-btn">Logout</button>
+        </aside>
+        <main class="content">
+            <header class="page-header">
+                <div>
+                    <p class="page-subtitle">Google Workspace</p>
+                    <h1 class="page-title">{% block header %}Your Schedule{% endblock %}</h1>
+                </div>
+                <div class="user-indicator">
+                    <span class="status-dot"></span>
+                    Connected
+                </div>
+            </header>
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</body>
+</html>
+
