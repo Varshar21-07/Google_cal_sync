@@ -6,8 +6,14 @@ from django.urls import reverse
 from django.conf import settings
 from django.utils import timezone
 from datetime import datetime, timedelta
+from googleapiclient.errors import HttpError
 from .models import GoogleToken
-from .utils import get_google_oauth_flow, get_credentials_from_token
+from .utils import (
+    get_google_oauth_flow,
+    authenticate_with_google,
+    fetch_calendar_list,
+    fetch_calendar_events,
+)
 
 
 def login_view(request):
@@ -131,14 +137,32 @@ def google_oauth_callback(request):
 
 
 def dashboard_view(request):
-    """Render the dashboard layout preview."""
-    # Check if user has Google token
+    """Render the dashboard with live calendar data."""
+    calendars = []
+    events = []
     has_token = False
+    api_error = None
+
     if request.user.is_authenticated:
         has_token = GoogleToken.objects.filter(user=request.user).exists()
-    
+        if has_token:
+            service = authenticate_with_google(request.user)
+            if service:
+                try:
+                    calendars = fetch_calendar_list(service)
+                    primary_calendar = next((cal for cal in calendars if cal.get('primary')), None)
+                    calendar_id = primary_calendar.get('id') if primary_calendar else 'primary'
+                    events = fetch_calendar_events(service, calendar_id=calendar_id, max_results=5)
+                except HttpError as error:
+                    api_error = f"Google API error: {error}"
+            else:
+                api_error = "Connect your Google account to view calendars."
+
     context = {
         'has_token': has_token,
+        'calendars': calendars,
+        'events': events,
+        'api_error': api_error,
     }
     return render(request, "google_cal_sync/dashboard.html", context)
 
@@ -149,28 +173,69 @@ def create_event_view(request):
 
 
 def upcoming_events_view(request):
-    """Render a dedicated upcoming events section."""
-    return render(request, "google_cal_sync/upcoming_events.html")
+    """Render a dedicated upcoming events section using live data."""
+    events = []
+    calendars = []
+    selected_calendar = request.GET.get('calendar_id', 'primary')
+    api_error = None
+    has_token = False
+
+    if request.user.is_authenticated:
+        has_token = GoogleToken.objects.filter(user=request.user).exists()
+        if has_token:
+            service = authenticate_with_google(request.user)
+            if service:
+                try:
+                    calendars = fetch_calendar_list(service)
+                    events = fetch_calendar_events(
+                        service,
+                        calendar_id=selected_calendar,
+                        max_results=20,
+                    )
+                except HttpError as error:
+                    api_error = f"Google API error: {error}"
+            else:
+                api_error = "Connect your Google account to view events."
+
+    context = {
+        'events': events,
+        'calendars': calendars,
+        'selected_calendar': selected_calendar,
+        'api_error': api_error,
+        'has_token': has_token,
+    }
+    return render(request, "google_cal_sync/upcoming_events.html", context)
 
 
 def settings_view(request):
-    """Render placeholder settings content."""
+    """Render settings with live token + calendar info."""
     has_token = False
     token_status = "Not connected"
+    primary_calendar = None
+    api_error = None
+
     if request.user.is_authenticated:
         try:
             google_token = GoogleToken.objects.get(user=request.user)
             has_token = True
-            # Use timezone-aware datetime for comparison
             if google_token.token_expiry and google_token.token_expiry > timezone.now():
                 token_status = "Active"
             else:
                 token_status = "Expired"
+
+            service = authenticate_with_google(request.user)
+            if service:
+                calendars = fetch_calendar_list(service)
+                primary_calendar = next((cal for cal in calendars if cal.get('primary')), None)
         except GoogleToken.DoesNotExist:
             pass
-    
+        except HttpError as error:
+            api_error = f"Google API error: {error}"
+
     context = {
         'has_token': has_token,
         'token_status': token_status,
+        'primary_calendar': primary_calendar,
+        'api_error': api_error,
     }
     return render(request, "google_cal_sync/settings.html", context)

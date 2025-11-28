@@ -5,34 +5,57 @@
 {% block header %}Upcoming Schedule{% endblock %}
 
 {% block content %}
-<section class="panel">
-    <div class="panel-header">
-        <h3>Next 7 Days</h3>
-        <button class="ghost-btn">Sync Now</button>
-    </div>
-    <ul class="event-list detailed">
-        <li>
-            <div>
-                <p>Standup Catch-up</p>
-                <span>Mon • 9:00 AM · 15 min</span>
-            </div>
-            <span class="event-chip">Calendar</span>
-        </li>
-        <li>
-            <div>
-                <p>Product Spec Review</p>
-                <span>Tue • 1:00 PM · Meet</span>
-            </div>
-            <span class="event-chip warning">Pending</span>
-        </li>
-        <li>
-            <div>
-                <p>Community Webinar</p>
-                <span>Thu • 5:30 PM · Public</span>
-            </div>
-            <span class="event-chip">Auto Synced</span>
-        </li>
-    </ul>
-</section>
+{% if not has_token %}
+    <section class="panel empty-state">
+        <h3>Connect Google Calendar</h3>
+        <p>Link your account to view upcoming events.</p>
+        <a href="{% url 'google_cal_sync:google_oauth_login' %}" class="primary-btn" style="display:inline-block;">Connect Google</a>
+    </section>
+{% else %}
+    {% if api_error %}
+        <section class="panel error-state">
+            <strong>Error:</strong> {{ api_error }}
+        </section>
+    {% endif %}
+
+    <section class="panel">
+        <div class="panel-header">
+            <h3>Upcoming Events</h3>
+            {% if calendars %}
+            <form method="get" class="calendar-selector">
+                <label>
+                    Calendar
+                    <select name="calendar_id" onchange="this.form.submit()">
+                        {% for calendar in calendars %}
+                            <option value="{{ calendar.id }}"
+                                {% if calendar.id == selected_calendar %}selected{% endif %}>
+                                {{ calendar.summary }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </label>
+            </form>
+            {% endif %}
+        </div>
+        {% if events %}
+            <ul class="event-list detailed">
+                {% for event in events %}
+                    <li>
+                        <div>
+                            <p>{{ event.summary|default:"Untitled event" }}</p>
+                            <span>
+                                {{ event.start_text }}
+                                {% if event.location %} · {{ event.location }}{% endif %}
+                            </span>
+                        </div>
+                        <span class="event-chip">{% if event.status %}{{ event.status|title }}{% else %}Scheduled{% endif %}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No events found for this calendar.</p>
+        {% endif %}
+    </section>
+{% endif %}
 {% endblock %}
 

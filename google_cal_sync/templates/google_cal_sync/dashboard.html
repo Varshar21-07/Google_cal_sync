@@ -5,43 +5,67 @@
 {% block header %}Today&apos;s Overview{% endblock %}
 
 {% block content %}
-<section class="cards-grid">
-    <article class="info-card">
-        <p class="info-label">Next Meeting</p>
-        <h2 class="info-value">Product Sync • 10:00 AM</h2>
-        <p class="info-meta">Google Meet · 30 min</p>
-    </article>
-    <article class="info-card">
-        <p class="info-label">Events Today</p>
-        <h2 class="info-value">5</h2>
-        <p class="info-meta">2 remaining for the day</p>
-    </article>
-    <article class="info-card">
-        <p class="info-label">Sync Status</p>
-        <h2 class="info-value ok">Connected</h2>
-        <p class="info-meta">Last sync · 2 mins ago</p>
-    </article>
-</section>
+{% if not has_token %}
+    <section class="panel empty-state">
+        <h3>Connect Google Calendar</h3>
+        <p>Link your Google account to load calendars and upcoming events.</p>
+        <a href="{% url 'google_cal_sync:google_oauth_login' %}" class="primary-btn" style="display:inline-block;">Connect Google</a>
+    </section>
+{% else %}
+    {% if api_error %}
+        <section class="panel error-state">
+            <strong>Error:</strong> {{ api_error }}
+        </section>
+    {% endif %}
 
-<section class="panel">
-    <div class="panel-header">
-        <h3>Upcoming Events</h3>
-        <button class="ghost-btn">Refresh</button>
-    </div>
-    <ul class="event-list">
-        <li>
-            <p>Design Review</p>
-            <span>11:30 AM · Room 401</span>
-        </li>
-        <li>
-            <p>Client Demo</p>
-            <span>2:00 PM · Meet link</span>
-        </li>
-        <li>
-            <p>Team Retro</p>
-            <span>4:30 PM · Conference</span>
-        </li>
-    </ul>
-</section>
+    <section class="cards-grid">
+        {% with next_event=events|first %}
+        <article class="info-card">
+            <p class="info-label">Next Event</p>
+            {% if next_event %}
+                <h2 class="info-value">{{ next_event.summary|default:"Unnamed event" }}</h2>
+                <p class="info-meta">
+                    {{ next_event.start_text }}
+                </p>
+            {% else %}
+                <h2 class="info-value">No upcoming events</h2>
+                <p class="info-meta">Your calendar is clear.</p>
+            {% endif %}
+        </article>
+        {% endwith %}
+        <article class="info-card">
+            <p class="info-label">Calendars Connected</p>
+            <h2 class="info-value">{{ calendars|length }}</h2>
+            <p class="info-meta">Primary + shared calendars</p>
+        </article>
+        <article class="info-card">
+            <p class="info-label">Events Loaded</p>
+            <h2 class="info-value">{{ events|length }}</h2>
+            <p class="info-meta">Upcoming items from your calendar</p>
+        </article>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <h3>Upcoming Events</h3>
+            <a href="{% url 'google_cal_sync:upcoming_events' %}" class="ghost-btn">View all</a>
+        </div>
+        {% if events %}
+            <ul class="event-list">
+                {% for event in events %}
+                    <li>
+                        <p>{{ event.summary|default:"Untitled event" }}</p>
+                        <span>
+                            {{ event.start_text }}
+                            {% if event.location %} · {{ event.location }}{% endif %}
+                        </span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No upcoming events found.</p>
+        {% endif %}
+    </section>
+{% endif %}
 {% endblock %}
 

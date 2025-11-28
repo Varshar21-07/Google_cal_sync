@@ -5,6 +5,11 @@
 {% block header %}Workspace Settings{% endblock %}
 
 {% block content %}
+{% if api_error %}
+<section class="panel error-state">
+    <strong>Error:</strong> {{ api_error }}
+</section>
+{% endif %}
 <section class="panel">
     <div class="panel-header">
         <h3>Google Account</h3>
@@ -13,9 +18,22 @@
     <div class="settings-row">
         <div>
             <p class="settings-label">Primary Calendar</p>
-            <p class="settings-value">designer@example.com</p>
+            {% if primary_calendar %}
+                <p class="settings-value">
+                    {{ primary_calendar.summary }}
+                    {% if primary_calendar.primary %}<span class="event-chip">Primary</span>{% endif %}
+                </p>
+            {% elif has_token %}
+                <p class="settings-value">No calendars returned</p>
+            {% else %}
+                <p class="settings-value">Not connected</p>
+            {% endif %}
         </div>
-        <button class="ghost-btn">Switch Account</button>
+        {% if has_token %}
+            <button class="ghost-btn" disabled>Switch Account (coming soon)</button>
+        {% else %}
+            <a href="{% url 'google_cal_sync:google_oauth_login' %}" class="ghost-btn">Connect Google</a>
+        {% endif %}
     </div>
     <div class="settings-row">
         <div>

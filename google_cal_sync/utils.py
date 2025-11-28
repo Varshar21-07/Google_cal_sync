@@ -2,8 +2,9 @@
 Utility functions for Google OAuth2 and Calendar API operations.
 """
 import os
-from datetime import datetime, timedelta
+from datetime import timedelta
 from django.conf import settings
+from django.utils import timezone
 from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
@@ -73,7 +74,8 @@ def refresh_token_if_needed(google_token):
         return False
     
     # Check if token is expired (with 5 minute buffer)
-    if google_token.token_expiry and google_token.token_expiry > datetime.now() + timedelta(minutes=5):
+    buffer_time = timezone.now() + timedelta(minutes=5)
+    if google_token.token_expiry and google_token.token_expiry > buffer_time:
         return False  # Token still valid
     
     credentials = get_credentials_from_token(google_token)
@@ -85,7 +87,8 @@ def refresh_token_if_needed(google_token):
     google_token.access_token = credentials.token
     if credentials.refresh_token:
         google_token.refresh_token = credentials.refresh_token
-    google_token.token_expiry = credentials.expiry
+    credentials_expiry = credentials.expiry or (timezone.now() + timedelta(hours=1))
+    google_token.token_expiry = credentials_expiry
     google_token.save()
     
     return True
@@ -112,4 +115,62 @@ def get_calendar_service(user):
     # Build and return the service
     service = build('calendar', 'v3', credentials=credentials)
     return service
+
+
+def authenticate_with_google(user):
+    """
+    Convenience helper that returns an authenticated Calendar service.
+    """
+    return get_calendar_service(user)
+
+
+def fetch_calendar_list(service):
+    """
+    Fetch the user's calendar list.
+    """
+    if not service:
+        return []
+
+    response = service.calendarList().list().execute()
+    return response.get('items', [])
+
+
+def fetch_calendar_events(service, calendar_id='primary', time_min=None, max_results=10):
+    """
+    Fetch upcoming events for the specified calendar.
+    """
+    if not service:
+        return []
+
+    if not time_min:
+        time_min = timezone.now().isoformat()
+
+    events_response = service.events().list(
+        calendarId=calendar_id,
+        timeMin=time_min,
+        maxResults=max_results,
+        singleEvents=True,
+        orderBy='startTime'
+    ).execute()
+
+    events = events_response.get('items', [])
+    return [normalize_event(event) for event in events]
+
+
+def normalize_event(event):
+    """
+    Prepare event dictionary with safe fields for templates.
+    """
+    start = event.get('start', {}) or {}
+    end = event.get('end', {}) or {}
+
+    return {
+        'id': event.get('id'),
+        'summary': event.get('summary', 'Untitled event'),
+        'start_text': start.get('dateTime') or start.get('date') or 'No start time',
+        'end_text': end.get('dateTime') or end.get('date'),
+        'location': event.get('location'),
+        'status': event.get('status'),
+        'raw': event,
+    }
 
