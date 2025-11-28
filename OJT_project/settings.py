@@ -11,10 +11,24 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    # Load .env file from the project root (same directory as manage.py)
+    env_path = BASE_DIR / '.env'
+    if env_path.exists():
+        load_dotenv(dotenv_path=env_path, override=True)
+except ImportError:
+    # If python-dotenv is not installed, try to load from environment directly
+    pass
+except Exception as e:
+    # If .env file doesn't exist, that's okay - will use system env vars
+    pass
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -24,6 +38,18 @@ SECRET_KEY = 'django-insecure-)4i&@rvnlt4u1fp&z@s+3knugojnd#onh2cz1g6xdoeh_j#7ew
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+
+# Debug: Verify variables are loaded (only in DEBUG mode)
+if DEBUG:
+    try:
+        client_id = os.getenv('GOOGLE_CLIENT_ID')
+        client_secret = os.getenv('GOOGLE_CLIENT_SECRET')
+        if client_id and client_secret:
+            print(f"✓ Environment variables loaded from {env_path}")
+        else:
+            print(f"WARNING: .env file found but GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET not loaded!")
+    except:
+        pass
 
 ALLOWED_HOSTS = []
 
@@ -117,6 +143,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Session configuration for OAuth
+SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'  # Allows redirects from Google
+SESSION_SAVE_EVERY_REQUEST = True  # Save session on every request
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

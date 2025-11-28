@@ -20,9 +20,19 @@
     <div class="settings-row">
         <div>
             <p class="settings-label">Token Status</p>
-            <p class="settings-value ok">Active · Refreshes automatically</p>
+            {% if has_token %}
+                <p class="settings-value {% if token_status == 'Active' %}ok{% else %}error{% endif %}">
+                    {{ token_status }} · {% if token_status == 'Active' %}Refreshes automatically{% else %}Needs refresh{% endif %}
+                </p>
+            {% else %}
+                <p class="settings-value">Not connected</p>
+            {% endif %}
         </div>
-        <button class="ghost-btn">Revoke Access</button>
+        {% if has_token %}
+            <button class="ghost-btn">Revoke Access</button>
+        {% else %}
+            <a href="{% url 'google_cal_sync:google_oauth_login' %}" class="ghost-btn">Connect Google</a>
+        {% endif %}
     </div>
 </section>
 {% endblock %}
