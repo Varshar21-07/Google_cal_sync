@@ -13,7 +13,23 @@ from .utils import (
     authenticate_with_google,
     fetch_calendar_list,
     fetch_calendar_events,
+    create_calendar_event,
 )
+
+
+def parse_event_datetime(value):
+    """
+    Convert form datetime-local value to ISO string with timezone info.
+    """
+    if not value:
+        return None
+    try:
+        dt = datetime.fromisoformat(value)
+    except ValueError:
+        return None
+    if timezone.is_naive(dt):
+        dt = timezone.make_aware(dt, timezone.get_current_timezone())
+    return dt.isoformat()
 
 
 def login_view(request):
@@ -168,8 +184,69 @@ def dashboard_view(request):
 
 
 def create_event_view(request):
-    """Render the create event form preview."""
-    return render(request, "google_cal_sync/create_event.html")
+    """Render the create event form and handle submissions."""
+    if not request.user.is_authenticated:
+        messages.error(request, "Please login to create events.")
+        return redirect('google_cal_sync:login')
+
+    calendars = []
+    api_error = None
+    selected_calendar = request.POST.get('calendar_id', 'primary')
+    form_values = {
+        'title': request.POST.get('title', ''),
+        'description': request.POST.get('description', ''),
+        'start_time': request.POST.get('start_time', ''),
+        'end_time': request.POST.get('end_time', ''),
+        'location': request.POST.get('location', ''),
+    }
+
+    service = authenticate_with_google(request.user)
+    if not service:
+        messages.error(request, "Connect your Google account before creating events.")
+        return redirect('google_cal_sync:login')
+
+    try:
+        calendars = fetch_calendar_list(service)
+    except HttpError as error:
+        api_error = f"Google API error: {error}"
+
+    if request.method == 'POST' and not api_error:
+        title = form_values['title'].strip()
+        description = form_values['description'].strip()
+        location = form_values['location'].strip() or None
+        start_iso = parse_event_datetime(form_values['start_time'])
+        end_iso = parse_event_datetime(form_values['end_time'])
+
+        if not title or not start_iso or not end_iso:
+            messages.error(request, "Title, start time, and end time are required.")
+        else:
+            try:
+                created_event = create_calendar_event(
+                    service,
+                    selected_calendar or 'primary',
+                    title,
+                    description,
+                    start_iso,
+                    end_iso,
+                    location,
+                )
+                messages.success(
+                    request,
+                    f"Event '{created_event['summary']}' created successfully."
+                )
+                return redirect('google_cal_sync:create_event')
+            except HttpError as error:
+                api_error = f"Google API error: {error}"
+            except ValueError as error:
+                api_error = str(error)
+
+    context = {
+        'calendars': calendars,
+        'selected_calendar': selected_calendar,
+        'api_error': api_error,
+        'form_values': form_values,
+    }
+    return render(request, "google_cal_sync/create_event.html", context)
 
 
 def upcoming_events_view(request):

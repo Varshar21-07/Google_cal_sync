@@ -174,3 +174,36 @@ def normalize_event(event):
         'raw': event,
     }
 
+
+def create_calendar_event(service, calendar_id, summary, description, start_iso, end_iso, location=None):
+    """
+    Create a new calendar event for the user.
+    """
+    if not service:
+        raise ValueError("Google Calendar service is not available.")
+
+    tz_name = timezone.get_current_timezone_name()
+
+    event_body = {
+        'summary': summary,
+        'description': description,
+        'start': {
+            'dateTime': start_iso,
+            'timeZone': tz_name,
+        },
+        'end': {
+            'dateTime': end_iso,
+            'timeZone': tz_name,
+        },
+    }
+
+    if location:
+        event_body['location'] = location
+
+    created_event = service.events().insert(
+        calendarId=calendar_id or 'primary',
+        body=event_body
+    ).execute()
+
+    return normalize_event(created_event)
+

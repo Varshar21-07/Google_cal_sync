@@ -10,31 +10,52 @@
         <h3>Quick Create</h3>
         <span>Send this form directly to Google Calendar</span>
     </div>
-    <form class="event-form">
+    {% if api_error %}
+        <div class="error-state" style="margin-bottom: 1rem;">
+            <strong>Error:</strong> {{ api_error }}
+        </div>
+    {% endif %}
+    <form class="event-form" method="post">
+        {% csrf_token %}
+        {% if calendars %}
+        <label>
+            Calendar
+            <select name="calendar_id" required>
+                {% for calendar in calendars %}
+                    <option value="{{ calendar.id }}"
+                        {% if calendar.id == selected_calendar %}selected{% endif %}>
+                        {{ calendar.summary }}
+                    </option>
+                {% endfor %}
+            </select>
+        </label>
+        {% else %}
+            <input type="hidden" name="calendar_id" value="primary">
+        {% endif %}
         <label>
             Title
-            <input type="text" name="title" placeholder="e.g., Sprint Planning" required>
+            <input type="text" name="title" placeholder="e.g., Sprint Planning" required value="{{ form_values.title }}">
         </label>
         <label>
             Description
-            <textarea name="description" rows="3" placeholder="Agenda, notes, meeting link"></textarea>
+            <textarea name="description" rows="3" placeholder="Agenda, notes, meeting link">{{ form_values.description }}</textarea>
         </label>
         <div class="two-col">
             <label>
                 Start Time
-                <input type="datetime-local" name="start_time" required>
+                <input type="datetime-local" name="start_time" required value="{{ form_values.start_time }}">
             </label>
             <label>
                 End Time
-                <input type="datetime-local" name="end_time" required>
+                <input type="datetime-local" name="end_time" required value="{{ form_values.end_time }}">
             </label>
         </div>
         <label>
             Location / Meet Link
-            <input type="text" name="location" placeholder="Conference Room or meet.google.com/...">
+            <input type="text" name="location" placeholder="Conference Room or meet.google.com/..." value="{{ form_values.location }}">
         </label>
         <div class="form-actions">
-            <button type="button" class="ghost-btn">Cancel</button>
+            <button type="reset" class="ghost-btn">Reset</button>
             <button type="submit" class="primary-btn">Create Event</button>
         </div>
     </form>
