@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.urls import reverse
@@ -463,3 +463,10 @@ def settings_view(request):
         'api_error': api_error,
     }
     return render(request, "google_cal_sync/settings.html", context)
+
+
+def logout_view(request):
+    """Log out the user and redirect to login page."""
+    logout(request)
+    messages.success(request, "You have been logged out successfully.")
+    return redirect('google_cal_sync:login')

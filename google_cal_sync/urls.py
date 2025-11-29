@@ -6,6 +6,7 @@ app_name = "google_cal_sync"
 
 urlpatterns = [
     path("login/", views.login_view, name="login"),
+    path("logout/", views.logout_view, name="logout"),
     path("auth/google/login/", views.google_oauth_login, name="google_oauth_login"),
     path("auth/google/callback/", views.google_oauth_callback, name="google_oauth_callback"),
     path("dashboard/", views.dashboard_view, name="dashboard"),
