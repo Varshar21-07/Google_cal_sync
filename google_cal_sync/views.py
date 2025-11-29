@@ -14,6 +14,9 @@ from .utils import (
     fetch_calendar_list,
     fetch_calendar_events,
     create_calendar_event,
+    get_calendar_event,
+    update_calendar_event,
+    delete_calendar_event,
 )
 
 
@@ -30,6 +33,23 @@ def parse_event_datetime(value):
     if timezone.is_naive(dt):
         dt = timezone.make_aware(dt, timezone.get_current_timezone())
     return dt.isoformat()
+
+
+def format_datetime_for_input(iso_value):
+    """
+    Convert stored ISO datetime to value usable in datetime-local input.
+    """
+    if not iso_value:
+        return ''
+    cleaned = iso_value.replace('Z', '+00:00')
+    try:
+        dt = datetime.fromisoformat(cleaned)
+    except ValueError:
+        return ''
+    if timezone.is_naive(dt):
+        dt = timezone.make_aware(dt, timezone.get_current_timezone())
+    local_dt = dt.astimezone(timezone.get_current_timezone())
+    return local_dt.strftime("%Y-%m-%dT%H:%M")
 
 
 def login_view(request):
@@ -245,8 +265,135 @@ def create_event_view(request):
         'selected_calendar': selected_calendar,
         'api_error': api_error,
         'form_values': form_values,
+        'mode': 'create',
     }
     return render(request, "google_cal_sync/create_event.html", context)
+
+
+def update_event_view(request):
+    """Allow editing an existing Google Calendar event."""
+    if not request.user.is_authenticated:
+        messages.error(request, "Please login to update events.")
+        return redirect('google_cal_sync:login')
+
+    calendar_id = request.GET.get('calendar_id') or request.POST.get('calendar_id') or 'primary'
+    event_id = request.GET.get('event_id') or request.POST.get('event_id')
+
+    if not event_id:
+        messages.error(request, "Event ID missing.")
+        return redirect('google_cal_sync:upcoming_events')
+
+    service = authenticate_with_google(request.user)
+    if not service:
+        messages.error(request, "Connect your Google account before updating events.")
+        return redirect('google_cal_sync:login')
+
+    calendars = []
+    api_error = None
+    form_values = {
+        'title': '',
+        'description': '',
+        'start_time': '',
+        'end_time': '',
+        'location': '',
+    }
+
+    try:
+        calendars = fetch_calendar_list(service)
+    except HttpError as error:
+        api_error = f"Google API error: {error}"
+
+    if not api_error:
+        try:
+            existing_event = get_calendar_event(service, calendar_id, event_id)
+            if request.method == 'GET':
+                form_values = {
+                    'title': existing_event['summary'],
+                    'description': existing_event['raw'].get('description', ''),
+                    'start_time': format_datetime_for_input(existing_event['raw']['start'].get('dateTime')),
+                    'end_time': format_datetime_for_input(existing_event['raw']['end'].get('dateTime')),
+                    'location': existing_event['raw'].get('location', ''),
+                }
+        except HttpError as error:
+            api_error = f"Google API error: {error}"
+
+    if request.method == 'POST' and not api_error:
+        form_values = {
+            'title': request.POST.get('title', ''),
+            'description': request.POST.get('description', ''),
+            'start_time': request.POST.get('start_time', ''),
+            'end_time': request.POST.get('end_time', ''),
+            'location': request.POST.get('location', ''),
+        }
+
+        title = form_values['title'].strip()
+        description = form_values['description'].strip()
+        location = form_values['location'].strip() or None
+        start_iso = parse_event_datetime(form_values['start_time'])
+        end_iso = parse_event_datetime(form_values['end_time'])
+
+        if not title or not start_iso or not end_iso:
+            messages.error(request, "Title, start time, and end time are required.")
+        else:
+            try:
+                update_calendar_event(
+                    service,
+                    calendar_id,
+                    event_id,
+                    title,
+                    description,
+                    start_iso,
+                    end_iso,
+                    location,
+                )
+                messages.success(request, "Event updated successfully.")
+                return redirect('google_cal_sync:upcoming_events')
+            except HttpError as error:
+                api_error = f"Google API error: {error}"
+            except ValueError as error:
+                api_error = str(error)
+
+    context = {
+        'calendars': calendars,
+        'selected_calendar': calendar_id,
+        'api_error': api_error,
+        'form_values': form_values,
+        'event_id': event_id,
+        'mode': 'update',
+    }
+    return render(request, "google_cal_sync/create_event.html", context)
+
+
+def delete_event_view(request):
+    """Delete an event from Google Calendar."""
+    if request.method != 'POST':
+        return redirect('google_cal_sync:upcoming_events')
+
+    if not request.user.is_authenticated:
+        messages.error(request, "Please login to delete events.")
+        return redirect('google_cal_sync:login')
+
+    calendar_id = request.POST.get('calendar_id') or 'primary'
+    event_id = request.POST.get('event_id')
+
+    if not event_id:
+        messages.error(request, "Event ID missing.")
+        return redirect('google_cal_sync:upcoming_events')
+
+    service = authenticate_with_google(request.user)
+    if not service:
+        messages.error(request, "Connect your Google account before deleting events.")
+        return redirect('google_cal_sync:login')
+
+    try:
+        delete_calendar_event(service, calendar_id, event_id)
+        messages.success(request, "Event deleted successfully.")
+    except HttpError as error:
+        messages.error(request, f"Google API error: {error}")
+    except ValueError as error:
+        messages.error(request, str(error))
+
+    return redirect('google_cal_sync:upcoming_events')
 
 
 def upcoming_events_view(request):

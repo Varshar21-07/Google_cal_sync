@@ -10,6 +10,8 @@ urlpatterns = [
     path("auth/google/callback/", views.google_oauth_callback, name="google_oauth_callback"),
     path("dashboard/", views.dashboard_view, name="dashboard"),
     path("events/create/", views.create_event_view, name="create_event"),
+    path("events/update/", views.update_event_view, name="update_event"),
+    path("events/delete/", views.delete_event_view, name="delete_event"),
     path("events/upcoming/", views.upcoming_events_view, name="upcoming_events"),
     path("settings/", views.settings_view, name="settings"),
 ]

@@ -376,6 +376,30 @@ body {
     color: #16a34a;
 }
 
+.event-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ghost-btn.small,
+.danger-btn.small {
+    padding: 0.3rem 0.8rem;
+    font-size: 0.85rem;
+}
+
+.event-actions form {
+    display: inline;
+}
+
+.danger-btn {
+    border-radius: 999px;
+    border: none;
+    background: rgba(239, 68, 68, 0.2);
+    color: #b91c1c;
+    cursor: pointer;
+}
+
 .flash-messages {
     display: flex;
     flex-direction: column;
@@ -402,5 +426,11 @@ body {
 .flash.info {
     background: #e0f2fe;
     color: #0c4a6e;
+}
+
+.form-hint {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-top: 0.5rem;
 }
 

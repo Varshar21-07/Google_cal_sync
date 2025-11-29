@@ -2,7 +2,7 @@
 
 {% block title %}Create Event • Calendar Sync{% endblock %}
 
-{% block header %}Create Google Calendar Event{% endblock %}
+{% block header %}{% if mode == 'update' %}Update Event{% else %}Create Google Calendar Event{% endif %}{% endblock %}
 
 {% block content %}
 <section class="panel">
@@ -54,10 +54,18 @@
             Location / Meet Link
             <input type="text" name="location" placeholder="Conference Room or meet.google.com/..." value="{{ form_values.location }}">
         </label>
+        {% if mode == 'update' %}
+            <input type="hidden" name="event_id" value="{{ event_id }}">
+        {% endif %}
         <div class="form-actions">
             <button type="reset" class="ghost-btn">Reset</button>
-            <button type="submit" class="primary-btn">Create Event</button>
+            <button type="submit" class="primary-btn">
+                {% if mode == 'update' %}Update Event{% else %}Create Event{% endif %}
+            </button>
         </div>
+        {% if mode == 'update' %}
+            <p class="form-hint">Updating event ID {{ event_id }} in calendar {{ selected_calendar }}.</p>
+        {% endif %}
     </form>
 </section>
 {% endblock %}

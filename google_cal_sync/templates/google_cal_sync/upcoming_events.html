@@ -48,7 +48,16 @@
                                 {% if event.location %} · {{ event.location }}{% endif %}
                             </span>
                         </div>
-                        <span class="event-chip">{% if event.status %}{{ event.status|title }}{% else %}Scheduled{% endif %}</span>
+                        <div class="event-actions">
+                            <span class="event-chip">{% if event.status %}{{ event.status|title }}{% else %}Scheduled{% endif %}</span>
+                            <a class="ghost-btn small" href="{% url 'google_cal_sync:update_event' %}?calendar_id={{ selected_calendar }}&event_id={{ event.id }}">Edit</a>
+                            <form method="post" action="{% url 'google_cal_sync:delete_event' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="calendar_id" value="{{ selected_calendar }}">
+                                <input type="hidden" name="event_id" value="{{ event.id }}">
+                                <button type="submit" class="danger-btn small">Delete</button>
+                            </form>
+                        </div>
                     </li>
                 {% endfor %}
             </ul>

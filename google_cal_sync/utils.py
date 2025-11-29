@@ -207,3 +207,54 @@ def create_calendar_event(service, calendar_id, summary, description, start_iso,
 
     return normalize_event(created_event)
 
+
+def get_calendar_event(service, calendar_id, event_id):
+    """
+    Retrieve a single calendar event.
+    """
+    event = service.events().get(calendarId=calendar_id, eventId=event_id).execute()
+    return normalize_event(event)
+
+
+def update_calendar_event(service, calendar_id, event_id, summary, description, start_iso, end_iso, location=None):
+    """
+    Update an existing calendar event.
+    """
+    if not service:
+        raise ValueError("Google Calendar service is not available.")
+
+    tz_name = timezone.get_current_timezone_name()
+    event_body = {
+        'summary': summary,
+        'description': description,
+        'start': {
+            'dateTime': start_iso,
+            'timeZone': tz_name,
+        },
+        'end': {
+            'dateTime': end_iso,
+            'timeZone': tz_name,
+        },
+    }
+
+    if location:
+        event_body['location'] = location
+
+    updated_event = service.events().patch(
+        calendarId=calendar_id,
+        eventId=event_id,
+        body=event_body
+    ).execute()
+
+    return normalize_event(updated_event)
+
+
+def delete_calendar_event(service, calendar_id, event_id):
+    """
+    Delete an event from the user's calendar.
+    """
+    if not service:
+        raise ValueError("Google Calendar service is not available.")
+
+    service.events().delete(calendarId=calendar_id, eventId=event_id).execute()
+
