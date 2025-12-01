@@ -1,6 +1,6 @@
 {% extends "google_cal_sync/base.html" %}
 
-{% block title %}Create Event • Calendar Sync{% endblock %}
+
 
 {% block header %}{% if mode == 'update' %}Update Event{% else %}Create Google Calendar Event{% endif %}{% endblock %}
 
@@ -52,7 +52,7 @@
         </div>
         <label>
             Location / Meet Link
-            <input type="text" name="location" placeholder="Conference Room or meet.google.com/..." value="{{ form_values.location }}">
+            <input type="link" name="location" placeholder="Conference Room or meet.google.com/..." value="{{ form_values.location }}">
         </label>
         {% if mode == 'update' %}
             <input type="hidden" name="event_id" value="{{ event_id }}">

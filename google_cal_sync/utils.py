@@ -26,7 +26,6 @@ def get_google_oauth_flow(request):
     if not client_id or not client_secret:
         raise ValueError("GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set in environment variables")
     
-    # Build redirect URI from request
     # Ensure consistent redirect URI (use localhost instead of 127.0.0.1)
     redirect_uri = request.build_absolute_uri('/auth/google/callback/')
     # Normalize to use localhost if it's 127.0.0.1
