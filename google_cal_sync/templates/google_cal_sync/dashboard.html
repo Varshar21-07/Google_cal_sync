@@ -36,7 +36,7 @@
         <article class="info-card">
             <p class="info-label">Calendars Connected</p>
             <h2 class="info-value">{{ calendars|length }}</h2>
-            <p class="info-meta">Primary + shared calendars</p>
+            <p class="info-meta">Primary &amp; shared calendars</p>
         </article>
         <article class="info-card">
             <p class="info-label">Events Loaded</p>
@@ -51,7 +51,7 @@
             <a href="{% url 'google_cal_sync:upcoming_events' %}" class="ghost-btn">View all</a>
         </div>
         {% if events %}
-            <ul class="event-list">
+            <ul class="event-list detailed">
                 {% for event in events %}
                     <li>
                         <p>{{ event.summary|default:"Untitled event" }}</p>

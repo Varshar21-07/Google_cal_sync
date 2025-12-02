@@ -5,11 +5,14 @@
 {% block header %}{% if mode == 'update' %}Update Event{% else %}Create Google Calendar Event{% endif %}{% endblock %}
 
 {% block content %}
-<section class="panel">
-    <div class="panel-header">
-        <h3>Quick Create</h3>
-        <span>Send this form directly to Google Calendar</span>
+<section class="create-card">
+    <div class="create-card-header">
+        <p class="create-card-header-subtitle">Create Appointment</p>
+        <h3 class="create-card-header-title">
+            {% if mode == 'update' %}Update Event{% else %}Create Google Calendar Event{% endif %}
+        </h3>
     </div>
+    <div class="create-card-body">
     {% if api_error %}
         <div class="error-state" style="margin-bottom: 1rem;">
             <strong>Error:</strong> {{ api_error }}
@@ -17,56 +20,80 @@
     {% endif %}
     <form class="event-form" method="post">
         {% csrf_token %}
-        {% if calendars %}
-        <label>
-            Calendar
-            <select name="calendar_id" required>
-                {% for calendar in calendars %}
-                    <option value="{{ calendar.id }}"
-                        {% if calendar.id == selected_calendar %}selected{% endif %}>
-                        {{ calendar.summary }}
-                    </option>
-                {% endfor %}
-            </select>
-        </label>
-        {% else %}
-            <input type="hidden" name="calendar_id" value="primary">
-        {% endif %}
-        <label>
-            Title
-            <input type="text" name="title" placeholder="e.g., Sprint Planning" required value="{{ form_values.title }}">
-        </label>
-        <label>
-            Description
-            <textarea name="description" rows="3" placeholder="Agenda, notes, meeting link">{{ form_values.description }}</textarea>
-        </label>
-        <div class="two-col">
-            <label>
-                Start Time
-                <input type="datetime-local" name="start_time" required value="{{ form_values.start_time }}">
-            </label>
-            <label>
-                End Time
-                <input type="datetime-local" name="end_time" required value="{{ form_values.end_time }}">
-            </label>
+        <div>
+            {% if calendars %}
+            <div>
+                <div class="create-field-label">Calendar</div>
+                <div class="create-input-row">
+                    <select name="calendar_id" required>
+                        {% for calendar in calendars %}
+                            <option value="{{ calendar.id }}"
+                                {% if calendar.id == selected_calendar %}selected{% endif %}>
+                                {{ calendar.summary }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            {% else %}
+                <input type="hidden" name="calendar_id" value="primary">
+            {% endif %}
+
+            <div style="margin-top: 1.2rem;">
+                <div class="create-field-label">Name</div>
+                <div class="create-input-row">
+                    <input type="text" name="title" placeholder="Workout Gym with Andreas" required value="{{ form_values.title }}">
+                </div>
+            </div>
+
+            <div style="margin-top: 1.2rem;">
+                <div class="create-field-label">Description</div>
+                <div class="create-input-row">
+                    <textarea name="description" rows="2" placeholder="Agenda, notes, meeting link">{{ form_values.description }}</textarea>
+                </div>
+            </div>
+
+            <div class="create-time-grid">
+                <div>
+                    <div class="create-time-block-label">Start Time</div>
+                    <div class="create-input-row">
+                        <input type="datetime-local" name="start_time" required value="{{ form_values.start_time }}">
+                    </div>
+                </div>
+                <div>
+                    <div class="create-time-block-label">End Time</div>
+                    <div class="create-input-row">
+                        <input type="datetime-local" name="end_time" required value="{{ form_values.end_time }}">
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 1.2rem;">
+                <div class="create-field-label">Location / Meet Link</div>
+                <div class="create-input-row">
+                    <input type="text" name="location" placeholder="Conference Room or meet.google.com/..." value="{{ form_values.location }}">
+                </div>
+            </div>
+
+            <div class="create-type-row">
+                <div class="create-field-label">Type</div>
+                <div class="pill-row">
+                    <button type="button" class="pill pill-fitness">Fitness</button>
+                    <button type="button" class="pill pill-health">Health</button>
+                    <button type="button" class="pill pill-add">+</button>
+                </div>
+            </div>
         </div>
-        <label>
-            Location / Meet Link
-            <input type="link" name="location" placeholder="Conference Room or meet.google.com/..." value="{{ form_values.location }}">
-        </label>
         {% if mode == 'update' %}
             <input type="hidden" name="event_id" value="{{ event_id }}">
         {% endif %}
-        <div class="form-actions">
-            <button type="reset" class="ghost-btn">Reset</button>
+        <div class="create-footer">
             <button type="submit" class="primary-btn">
-                {% if mode == 'update' %}Update Event{% else %}Create Event{% endif %}
+                {% if mode == 'update' %}Update{% else %}Create{% endif %}
             </button>
         </div>
-        {% if mode == 'update' %}
-            <p class="form-hint">Updating event ID {{ event_id }} in calendar {{ selected_calendar }}.</p>
-        {% endif %}
     </form>
+    </div>
 </section>
 {% endblock %}
 
