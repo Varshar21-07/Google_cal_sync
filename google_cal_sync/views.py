@@ -12,6 +12,7 @@ from .utils import (
     get_google_oauth_flow,
     authenticate_with_google,
     fetch_calendar_list,
+    get_writable_calendars,
     fetch_calendar_events,
     create_calendar_event,
     get_calendar_event,
@@ -226,9 +227,17 @@ def create_event_view(request):
         return redirect('google_cal_sync:login')
 
     try:
-        calendars = fetch_calendar_list(service)
+        # Only show calendars where user can write events
+        calendars = get_writable_calendars(service)
+        if not calendars:
+            api_error = "No writable calendars found. Please ensure you have at least one calendar with write access."
     except HttpError as error:
-        api_error = f"Google API error: {error}"
+        error_str = str(error)
+        # Check for specific permission errors
+        if 'requiredAccessLevel' in error_str or 'writer access' in error_str.lower():
+            api_error = "You don't have permission to write to this calendar. Please select a calendar you own or have write access to."
+        else:
+            api_error = f"Google API error: {error}"
 
     if request.method == 'POST' and not api_error:
         title = form_values['title'].strip()
@@ -256,7 +265,14 @@ def create_event_view(request):
                 )
                 return redirect('google_cal_sync:create_event')
             except HttpError as error:
-                api_error = f"Google API error: {error}"
+                error_str = str(error)
+                # Provide user-friendly error messages
+                if 'requiredAccessLevel' in error_str or 'writer access' in error_str.lower():
+                    api_error = "❌ You don't have permission to create events in this calendar. Please select a calendar you own or have write access to (not read-only calendars like 'Holidays in India')."
+                elif '403' in error_str:
+                    api_error = "❌ Access denied. This calendar is read-only. Please select your primary calendar or another calendar you own."
+                else:
+                    api_error = f"Google API error: {error}"
             except ValueError as error:
                 api_error = str(error)
 
@@ -299,9 +315,16 @@ def update_event_view(request):
     }
 
     try:
-        calendars = fetch_calendar_list(service)
+        # Only show calendars where user can write events
+        calendars = get_writable_calendars(service)
+        if not calendars:
+            api_error = "No writable calendars found. Please ensure you have at least one calendar with write access."
     except HttpError as error:
-        api_error = f"Google API error: {error}"
+        error_str = str(error)
+        if 'requiredAccessLevel' in error_str or 'writer access' in error_str.lower():
+            api_error = "You don't have permission to write to this calendar. Please select a calendar you own or have write access to."
+        else:
+            api_error = f"Google API error: {error}"
 
     if not api_error:
         try:
@@ -315,7 +338,11 @@ def update_event_view(request):
                     'location': existing_event['raw'].get('location', ''),
                 }
         except HttpError as error:
-            api_error = f"Google API error: {error}"
+            error_str = str(error)
+            if 'requiredAccessLevel' in error_str or 'writer access' in error_str.lower():
+                api_error = "You don't have permission to read this event. Please select a calendar you own or have write access to."
+            else:
+                api_error = f"Google API error: {error}"
 
     if request.method == 'POST' and not api_error:
         form_values = {
@@ -349,7 +376,13 @@ def update_event_view(request):
                 messages.success(request, "Event updated successfully.")
                 return redirect('google_cal_sync:upcoming_events')
             except HttpError as error:
-                api_error = f"Google API error: {error}"
+                error_str = str(error)
+                if 'requiredAccessLevel' in error_str or 'writer access' in error_str.lower():
+                    api_error = "❌ You don't have permission to update events in this calendar. Please select a calendar you own or have write access to."
+                elif '403' in error_str:
+                    api_error = "❌ Access denied. This calendar is read-only. Please select your primary calendar or another calendar you own."
+                else:
+                    api_error = f"Google API error: {error}"
             except ValueError as error:
                 api_error = str(error)
 

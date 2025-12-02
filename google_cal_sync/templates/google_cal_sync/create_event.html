@@ -14,8 +14,13 @@
     </div>
     <div class="create-card-body">
     {% if api_error %}
-        <div class="error-state" style="margin-bottom: 1rem;">
-            <strong>Error:</strong> {{ api_error }}
+        <div class="error-state" style="margin-bottom: 1.5rem; padding: 1rem; border-radius: 12px; background: #fee2e2; border: 1px solid #fecaca; color: #b91c1c;">
+            <strong>⚠️ Error:</strong> {{ api_error }}
+        </div>
+    {% endif %}
+    {% if calendars|length == 0 and not api_error %}
+        <div class="error-state" style="margin-bottom: 1.5rem; padding: 1rem; border-radius: 12px; background: #fef3c7; border: 1px solid #fde68a; color: #92400e;">
+            <strong>ℹ️ Note:</strong> No writable calendars available. Please ensure you have at least one calendar with write access.
         </div>
     {% endif %}
     <form class="event-form" method="post">
@@ -29,11 +34,14 @@
                         {% for calendar in calendars %}
                             <option value="{{ calendar.id }}"
                                 {% if calendar.id == selected_calendar %}selected{% endif %}>
-                                {{ calendar.summary }}
+                                {{ calendar.summary }}{% if calendar.primary %} (Primary){% endif %}
                             </option>
                         {% endfor %}
                     </select>
                 </div>
+                <p style="margin-top: 0.5rem; font-size: 0.75rem; color: #64748b;">
+                    💡 Only calendars you can write to are shown. Read-only calendars (like public holidays) are hidden.
+                </p>
             </div>
             {% else %}
                 <input type="hidden" name="calendar_id" value="primary">

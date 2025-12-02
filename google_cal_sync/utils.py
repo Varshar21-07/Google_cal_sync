@@ -134,6 +134,23 @@ def fetch_calendar_list(service):
     return response.get('items', [])
 
 
+def get_writable_calendars(service):
+    """
+    Fetch only calendars where the user has write access (owner or writer).
+    Filters out read-only calendars like public holiday calendars.
+    """
+    all_calendars = fetch_calendar_list(service)
+    writable_calendars = []
+    
+    for calendar in all_calendars:
+        access_role = calendar.get('accessRole', '').lower()
+        # Only include calendars where user can write
+        if access_role in ['owner', 'writer']:
+            writable_calendars.append(calendar)
+    
+    return writable_calendars
+
+
 def fetch_calendar_events(service, calendar_id='primary', time_min=None, max_results=10):
     """
     Fetch upcoming events for the specified calendar.
