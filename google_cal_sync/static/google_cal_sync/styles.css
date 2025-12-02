@@ -1,12 +1,20 @@
 :root {
     font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    color: #8ca8ea;
-    background-color: #f5f7fb;
+    color: #1f2933;
+    background-color: #f3f4ff;
+    --sidebar-bg: #0b1220;
+    --sidebar-accent: #6366f1;
+    --sidebar-accent-soft: rgba(99, 102, 241, 0.18);
+    --sidebar-accent-strong: rgba(99, 102, 241, 0.35);
+    --danger-soft: rgba(248, 113, 113, 0.18);
+    --danger-strong: #b91c1c;
+    --primary-gradient-start: #6366f1;
+    --primary-gradient-end: #10b981;
 }
 
 body {
     margin: 0;
-    background-color: #f5f7fb;
+    background: radial-gradient(circle at top, #e0e7ff, #f3f4ff);
 }
 
 .layout {
@@ -16,7 +24,7 @@ body {
 }
 
 .side-menu {
-    background: #111827;
+    background: var(--sidebar-bg);
     color: #e5e7eb;
     padding: 2rem 1.5rem;
     display: flex;
@@ -36,7 +44,7 @@ body {
     width: 40px;
     height: 40px;
     border-radius: 12px;
-    background: linear-gradient(135deg, #2563eb, #38bdf8);
+    background: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end));
     display: grid;
     place-items: center;
     font-weight: 600;
@@ -49,15 +57,16 @@ body {
     color: inherit;
     text-decoration: none;
     margin-bottom: 0.5rem;
-    transition: background 0.2s;
+    transition: background 0.18s ease, transform 0.18s ease;
 }
 
 .nav-link:hover {
-    background: rgba(59, 130, 246, 0.2);
+    background: var(--sidebar-accent-soft);
+    transform: translateX(2px);
 }
 
 .nav-link.active {
-    background: rgba(59, 130, 246, 0.35);
+    background: var(--sidebar-accent-strong);
     color: #fff;
 }
 
@@ -65,14 +74,14 @@ body {
     margin-top: auto;
     padding: 0.75rem 1rem;
     border-radius: 10px;
-    border: none;
-    background: rgba(239, 68, 68, 0.15);
-    color: #fecaca;
+    border: 1px solid rgba(248, 113, 113, 0.6);
+    background: var(--danger-soft);
+    color: #fee2e2;
     cursor: pointer;
 }
 
 .content {
-    padding: 2rem 3rem;
+    padding: 2rem clamp(1.5rem, 4vw, 3rem);
 }
 
 .page-header {
@@ -194,8 +203,8 @@ body {
 .event-chip {
     padding: 0.25rem 0.75rem;
     border-radius: 999px;
-    background: rgba(37, 99, 235, 0.12);
-    color: #2563eb;
+    background: rgba(99, 102, 241, 0.12);
+    color: var(--sidebar-accent);
     font-size: 0.8rem;
     font-weight: 600;
 }
@@ -279,7 +288,7 @@ body {
 }
 
 .primary-btn {
-    background: linear-gradient(135deg, #2563eb, #38bdf8);
+    background: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end));
     color: white;
 }
 
