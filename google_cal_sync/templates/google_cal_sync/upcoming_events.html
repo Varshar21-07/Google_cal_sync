@@ -6,65 +6,75 @@
 
 {% block content %}
 {% if not has_token %}
-    <section class="panel empty-state">
-        <h3>Connect Google Calendar</h3>
-        <p>Link your account to view upcoming events.</p>
-        <a href="{% url 'google_cal_sync:google_oauth_login' %}" class="primary-btn" style="display:inline-block;">Connect Google</a>
-    </section>
+<section class="panel empty-state">
+    <h3>Connect Google Calendar</h3>
+    <p>Link your account to view upcoming events.</p>
+    <a href="{% url 'google_cal_sync:google_oauth_login' %}" class="primary-btn" style="display:inline-block;">Connect
+        Google</a>
+</section>
 {% else %}
-    {% if api_error %}
-        <section class="panel error-state">
-            <strong>Error:</strong> {{ api_error }}
-        </section>
-    {% endif %}
+{% if api_error %}
+<section class="panel error-state">
+    <strong>Error:</strong> {{ api_error }}
+</section>
+{% endif %}
 
-    <section class="panel">
-        <div class="panel-header">
-            <h3>Upcoming Events</h3>
-            {% if calendars %}
-            <form method="get" class="calendar-selector">
-                <label>
-                    Calendar
-                    <select name="calendar_id" onchange="this.form.submit()">
-                        {% for calendar in calendars %}
-                            <option value="{{ calendar.id }}"
-                                {% if calendar.id == selected_calendar %}selected{% endif %}>
-                                {{ calendar.summary }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </label>
-            </form>
-            {% endif %}
-        </div>
-        {% if events %}
-            <ul class="event-list detailed">
-                {% for event in events %}
-                    <li>
-                        <div>
-                            <p>{{ event.summary|default:"Untitled event" }}</p>
-                            <span>
-                                {{ event.start_text }}
-                                {% if event.location %} · {{ event.location }}{% endif %}
-                            </span>
-                        </div>
-                        <div class="event-actions">
-                            <span class="event-chip">{% if event.status %}{{ event.status|title }}{% else %}Scheduled{% endif %}</span>
-                            <a class="ghost-btn small" href="{% url 'google_cal_sync:update_event' %}?calendar_id={{ selected_calendar }}&event_id={{ event.id }}">Edit</a>
-                            <form method="post" action="{% url 'google_cal_sync:delete_event' %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="calendar_id" value="{{ selected_calendar }}">
-                                <input type="hidden" name="event_id" value="{{ event.id }}">
-                                <button type="submit" class="danger-btn small">Delete</button>
-                            </form>
-                        </div>
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>No events found for this calendar.</p>
+<section class="panel">
+    <div class="panel-header">
+        <h3>Upcoming Events</h3>
+        {% if calendars %}
+        <form method="get" class="calendar-selector">
+            <label>
+                Calendar
+                <select name="calendar_id" onchange="this.form.submit()">
+                    {% for calendar in calendars %}
+                    <option value="{{ calendar.id }}" {% if calendar.id == selected_calendar %}selected{% endif %}>
+                        {{ calendar.summary }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </label>
+        </form>
         {% endif %}
-    </section>
+    </div>
+    {% if events %}
+    <div class="timeline-container">
+        {% for event in events %}
+        <div class="event-card">
+            <div class="event-date-badge">
+                <span class="event-date-day">{{ event.start_dt|date:"d" }}</span>
+                <span class="event-date-month">{{ event.start_dt|date:"M" }}</span>
+            </div>
+            <div class="event-details">
+                <h4 class="event-title">{{ event.summary|default:"Untitled event" }}</h4>
+                <div class="event-meta">
+                    <div class="event-time-range">
+                        🕒 {{ event.start_text }}
+                    </div>
+                    {% if event.location %}
+                    <div class="event-location">
+                        📍 {{ event.location }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="event-card-actions">
+                <a class="icon-btn edit"
+                    href="{% url 'google_cal_sync:update_event' %}?calendar_id={{ selected_calendar }}&event_id={{ event.id }}"
+                    title="Edit">✏️</a>
+                <form method="post" action="{% url 'google_cal_sync:delete_event' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="calendar_id" value="{{ selected_calendar }}">
+                    <input type="hidden" name="event_id" value="{{ event.id }}">
+                    <button type="submit" class="icon-btn delete" title="Delete">🗑️</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No events found for this calendar.</p>
+    {% endif %}
+</section>
 {% endif %}
 {% endblock %}
-

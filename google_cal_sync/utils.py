@@ -28,6 +28,14 @@ def get_google_oauth_flow(request):
     
     # Ensure consistent redirect URI (use localhost instead of 127.0.0.1)
     redirect_uri = request.build_absolute_uri('/auth/google/callback/')
+    
+    # Force HTTP in development (DEBUG mode)
+    # This prevents HTTPS redirect issues when browser tries HTTPS but server only supports HTTP
+    if settings.DEBUG:
+        # Force HTTP scheme in development
+        if redirect_uri.startswith('https://'):
+            redirect_uri = redirect_uri.replace('https://', 'http://', 1)
+    
     # Normalize to use localhost if it's 127.0.0.1
     if '127.0.0.1' in redirect_uri:
         redirect_uri = redirect_uri.replace('127.0.0.1', 'localhost')
@@ -68,6 +76,7 @@ def refresh_token_if_needed(google_token):
     Check if token is expired and refresh it if needed.
     Updates the GoogleToken model with new access token.
     Returns True if token was refreshed, False if still valid.
+    Raises exception if refresh fails (network error, etc.)
     """
     if not google_token:
         return False
@@ -79,8 +88,12 @@ def refresh_token_if_needed(google_token):
     
     credentials = get_credentials_from_token(google_token)
     
-    # Refresh the token
-    credentials.refresh(Request())
+    # Refresh the token - this may raise TransportError if network is unavailable
+    try:
+        credentials.refresh(Request())
+    except Exception as e:
+        # Re-raise the exception so callers can handle it
+        raise
     
     # Update the model
     google_token.access_token = credentials.token
@@ -97,6 +110,7 @@ def get_calendar_service(user):
     """
     Get a Google Calendar API service instance for the user.
     Automatically refreshes token if needed.
+    Returns None if token doesn't exist or if refresh fails (network error).
     """
     from .models import GoogleToken
     
@@ -105,15 +119,24 @@ def get_calendar_service(user):
     except GoogleToken.DoesNotExist:
         return None
     
-    # Refresh token if needed
-    refresh_token_if_needed(google_token)
+    # Refresh token if needed - catch network errors
+    try:
+        refresh_token_if_needed(google_token)
+    except Exception:
+        # If refresh fails (network error, etc.), return None
+        # The caller should handle this gracefully
+        return None
     
     # Get fresh credentials
     credentials = get_credentials_from_token(google_token)
     
     # Build and return the service
-    service = build('calendar', 'v3', credentials=credentials)
-    return service
+    try:
+        service = build('calendar', 'v3', credentials=credentials)
+        return service
+    except Exception:
+        # If service build fails, return None
+        return None
 
 
 def authenticate_with_google(user):

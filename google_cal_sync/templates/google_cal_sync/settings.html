@@ -7,17 +7,68 @@
 {% block content %}
 {% if api_error %}
 <section class="panel error-state">
-    <strong>Error:</strong> {{ api_error }}
+    <div class="error-icon">⚠️</div>
+    <div>
+        <strong>Connection Error:</strong> {{ api_error }}
+    </div>
 </section>
 {% endif %}
+
 <section class="panel">
     <div class="panel-header">
-        <h3>Google Account</h3>
-        <span>Manage connected identity and scopes</span>
+        <div class="panel-header-left">
+            <span class="panel-icon">⚙️</span>
+            <div>
+                <h3>Google Account</h3>
+                <span>Manage connected identity and scopes</span>
+            </div>
+        </div>
     </div>
+    
     <div class="settings-row">
-        <div>
-            <p class="settings-label">Primary Calendar</p>
+        <div class="settings-info">
+            <p class="settings-label">
+                <span class="field-icon">📧</span>
+                Connected Email
+            </p>
+            {% if has_token %}
+                {% if user_email %}
+                    <p class="settings-value">
+                        <span class="email-display">{{ user_email }}@gmail.com</span>
+                    </p>
+                {% elif primary_calendar %}
+                    <p class="settings-value">
+                        <span class="email-display">{{ primary_calendar.summary }}</span>
+                    </p>
+                {% else %}
+                    <p class="settings-value">Connected</p>
+                {% endif %}
+            {% else %}
+                <p class="settings-value">Not connected</p>
+            {% endif %}
+        </div>
+        {% if has_token %}
+            <form method="post" action="{% url 'google_cal_sync:switch_account' %}" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="ghost-btn btn-with-icon" onclick="return confirm('Are you sure you want to disconnect this account? You will need to reconnect to use calendar features.');">
+                    <span class="btn-icon">🔄</span>
+                    <span>Switch Account</span>
+                </button>
+            </form>
+        {% else %}
+            <a href="{% url 'google_cal_sync:google_oauth_login' %}" class="primary-btn btn-with-icon">
+                <span class="btn-icon">🔗</span>
+                <span>Connect Google</span>
+            </a>
+        {% endif %}
+    </div>
+    
+    <div class="settings-row">
+        <div class="settings-info">
+            <p class="settings-label">
+                <span class="field-icon">📅</span>
+                Primary Calendar
+            </p>
             {% if primary_calendar %}
                 <p class="settings-value">
                     {{ primary_calendar.summary }}
@@ -29,28 +80,23 @@
                 <p class="settings-value">Not connected</p>
             {% endif %}
         </div>
-        {% if has_token %}
-            <button class="ghost-btn" disabled>Switch Account (coming soon)</button>
-        {% else %}
-            <a href="{% url 'google_cal_sync:google_oauth_login' %}" class="ghost-btn">Connect Google</a>
-        {% endif %}
     </div>
+    
     <div class="settings-row">
-        <div>
-            <p class="settings-label">Token Status</p>
+        <div class="settings-info">
+            <p class="settings-label">
+                <span class="field-icon">🔐</span>
+                Token Status
+            </p>
             {% if has_token %}
                 <p class="settings-value {% if token_status == 'Active' %}ok{% else %}error{% endif %}">
+                    <span class="status-indicator {% if token_status == 'Active' %}status-active{% else %}status-expired{% endif %}"></span>
                     {{ token_status }} · {% if token_status == 'Active' %}Refreshes automatically{% else %}Needs refresh{% endif %}
                 </p>
             {% else %}
                 <p class="settings-value">Not connected</p>
             {% endif %}
         </div>
-        {% if has_token %}
-            <button class="ghost-btn">Revoke Access</button>
-        {% else %}
-            <a href="{% url 'google_cal_sync:google_oauth_login' %}" class="ghost-btn">Connect Google</a>
-        {% endif %}
     </div>
 </section>
 {% endblock %}

@@ -15,5 +15,6 @@ urlpatterns = [
     path("events/delete/", views.delete_event_view, name="delete_event"),
     path("events/upcoming/", views.upcoming_events_view, name="upcoming_events"),
     path("settings/", views.settings_view, name="settings"),
+    path("settings/switch-account/", views.switch_account_view, name="switch_account"),
 ]
 

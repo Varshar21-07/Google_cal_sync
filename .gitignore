@@ -10,7 +10,7 @@ db.sqlite3-journal
 *.db
 
 # Python
-__pycache__/
+__pycache__
 *.py[cod]
 *$py.class
 *.so

@@ -16,13 +16,28 @@
             </div>
             <nav>
                 {% with request.resolver_match.url_name as current %}
-                <a href="{% url 'google_cal_sync:dashboard' %}" class="nav-link {% if current == 'dashboard' %}active{% endif %}">Dashboard</a>
-                <a href="{% url 'google_cal_sync:create_event' %}" class="nav-link {% if current == 'create_event' %}active{% endif %}">Create Event</a>
-                <a href="{% url 'google_cal_sync:upcoming_events' %}" class="nav-link {% if current == 'upcoming_events' %}active{% endif %}">Upcoming Events</a>
-                <a href="{% url 'google_cal_sync:settings' %}" class="nav-link {% if current == 'settings' %}active{% endif %}">Settings</a>
+                <a href="{% url 'google_cal_sync:dashboard' %}" class="nav-link {% if current == 'dashboard' %}active{% endif %}">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{% url 'google_cal_sync:create_event' %}" class="nav-link {% if current == 'create_event' %}active{% endif %}">
+                    <span class="nav-icon">➕</span>
+                    <span>Create Event</span>
+                </a>
+                <a href="{% url 'google_cal_sync:upcoming_events' %}" class="nav-link {% if current == 'upcoming_events' %}active{% endif %}">
+                    <span class="nav-icon">📅</span>
+                    <span>Upcoming Events</span>
+                </a>
+                <a href="{% url 'google_cal_sync:settings' %}" class="nav-link {% if current == 'settings' %}active{% endif %}">
+                    <span class="nav-icon">⚙️</span>
+                    <span>Settings</span>
+                </a>
                 {% endwith %}
             </nav>
-            <a href="{% url 'google_cal_sync:logout' %}" class="logout-btn" style="text-decoration: none; display: block; text-align: center;">Logout</a>
+            <a href="{% url 'google_cal_sync:logout' %}" class="logout-btn" style="text-decoration: none; display: block; text-align: center;">
+                <span class="nav-icon">🚪</span>
+                <span>Logout</span>
+            </a>
         </aside>
         <main class="content">
             <header class="page-header">

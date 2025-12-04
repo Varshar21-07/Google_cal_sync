@@ -1,36 +1,50 @@
 {% extends "google_cal_sync/base.html" %}
 
-
-
 {% block header %}{% if mode == 'update' %}Update Event{% else %}Create Google Calendar Event{% endif %}{% endblock %}
 
 {% block content %}
 <section class="create-card">
     <div class="create-card-header">
-        <p class="create-card-header-subtitle">Create Appointment</p>
-        <h3 class="create-card-header-title">
-            {% if mode == 'update' %}Update Event{% else %}Create Google Calendar Event{% endif %}
-        </h3>
+        <div class="create-card-header-content">
+            <span class="create-card-icon">{% if mode == 'update' %}✏️{% else %}➕{% endif %}</span>
+            <div>
+                <h3 class="create-card-header-title">
+                    {% if mode == 'update' %}Update Event{% else %}Create Event{% endif %}
+                </h3>
+                <p class="create-card-header-subtitle">
+                    {% if mode == 'update' %}Modify your calendar event{% else %}Add a new event to your calendar{% endif %}
+                </p>
+            </div>
+        </div>
     </div>
     <div class="create-card-body">
     {% if api_error %}
-        <div class="error-state" style="margin-bottom: 1.5rem; padding: 1rem; border-radius: 12px; background: #fee2e2; border: 1px solid #fecaca; color: #b91c1c;">
-            <strong>⚠️ Error:</strong> {{ api_error }}
+        <div class="alert-message alert-error">
+            <span class="alert-icon">⚠️</span>
+            <div>
+                <strong>Error:</strong> {{ api_error }}
+            </div>
         </div>
     {% endif %}
     {% if calendars|length == 0 and not api_error %}
-        <div class="error-state" style="margin-bottom: 1.5rem; padding: 1rem; border-radius: 12px; background: #fef3c7; border: 1px solid #fde68a; color: #92400e;">
-            <strong>ℹ️ Note:</strong> No writable calendars available. Please ensure you have at least one calendar with write access.
+        <div class="alert-message alert-warning">
+            <span class="alert-icon">ℹ️</span>
+            <div>
+                <strong>Note:</strong> No writable calendars available. Please ensure you have at least one calendar with write access.
+            </div>
         </div>
     {% endif %}
-    <form class="event-form" method="post">
+    <form class="event-form" method="post" id="eventForm">
         {% csrf_token %}
-        <div>
+        <div class="form-fields">
             {% if calendars %}
-            <div>
-                <div class="create-field-label">Calendar</div>
-                <div class="create-input-row">
-                    <select name="calendar_id" required>
+            <div class="form-field-group">
+                <label class="form-field-label">
+                    <span class="field-icon">📅</span>
+                    <span>Calendar</span>
+                </label>
+                <div class="form-input-wrapper">
+                    <select name="calendar_id" required class="form-input form-select">
                         {% for calendar in calendars %}
                             <option value="{{ calendar.id }}"
                                 {% if calendar.id == selected_calendar %}selected{% endif %}>
@@ -39,56 +53,59 @@
                         {% endfor %}
                     </select>
                 </div>
-                <p style="margin-top: 0.5rem; font-size: 0.75rem; color: #64748b;">
-                    💡 Only calendars you can write to are shown. Read-only calendars (like public holidays) are hidden.
-                </p>
             </div>
             {% else %}
                 <input type="hidden" name="calendar_id" value="primary">
             {% endif %}
 
-            <div style="margin-top: 1.2rem;">
-                <div class="create-field-label">Name</div>
-                <div class="create-input-row">
-                    <input type="text" name="title" placeholder="Workout Gym with Andreas" required value="{{ form_values.title }}">
+            <div class="form-field-group">
+                <label class="form-field-label">
+                    <span class="field-icon">📝</span>
+                    <span>Event Name</span>
+                </label>
+                <div class="form-input-wrapper">
+                    <input type="text" name="title" placeholder="Enter event name" required value="{{ form_values.title }}" class="form-input">
                 </div>
             </div>
 
-            <div style="margin-top: 1.2rem;">
-                <div class="create-field-label">Description</div>
-                <div class="create-input-row">
-                    <textarea name="description" rows="2" placeholder="Agenda, notes, meeting link">{{ form_values.description }}</textarea>
+            <div class="form-field-group">
+                <label class="form-field-label">
+                    <span class="field-icon">📄</span>
+                    <span>Description</span>
+                </label>
+                <div class="form-input-wrapper">
+                    <textarea name="description" rows="3" placeholder="Add agenda, notes, or meeting link..." class="form-input form-textarea">{{ form_values.description }}</textarea>
                 </div>
             </div>
 
-            <div class="create-time-grid">
-                <div>
-                    <div class="create-time-block-label">Start Time</div>
-                    <div class="create-input-row">
-                        <input type="datetime-local" name="start_time" required value="{{ form_values.start_time }}">
+            <div class="form-time-grid">
+                <div class="form-field-group">
+                    <label class="form-field-label">
+                        <span class="field-icon">🕐</span>
+                        <span>Start Time</span>
+                    </label>
+                    <div class="form-input-wrapper">
+                        <input type="datetime-local" name="start_time" required value="{{ form_values.start_time }}" class="form-input">
                     </div>
                 </div>
-                <div>
-                    <div class="create-time-block-label">End Time</div>
-                    <div class="create-input-row">
-                        <input type="datetime-local" name="end_time" required value="{{ form_values.end_time }}">
+                <div class="form-field-group">
+                    <label class="form-field-label">
+                        <span class="field-icon">🕐</span>
+                        <span>End Time</span>
+                    </label>
+                    <div class="form-input-wrapper">
+                        <input type="datetime-local" name="end_time" required value="{{ form_values.end_time }}" class="form-input">
                     </div>
                 </div>
             </div>
 
-            <div style="margin-top: 1.2rem;">
-                <div class="create-field-label">Location / Meet Link</div>
-                <div class="create-input-row">
-                    <input type="text" name="location" placeholder="Conference Room or meet.google.com/..." value="{{ form_values.location }}">
-                </div>
-            </div>
-
-            <div class="create-type-row">
-                <div class="create-field-label">Type</div>
-                <div class="pill-row">
-                    <button type="button" class="pill pill-fitness">Fitness</button>
-                    <button type="button" class="pill pill-health">Health</button>
-                    <button type="button" class="pill pill-add">+</button>
+            <div class="form-field-group">
+                <label class="form-field-label">
+                    <span class="field-icon">📍</span>
+                    <span>Location / Meet Link</span>
+                </label>
+                <div class="form-input-wrapper">
+                    <input type="text" name="location" placeholder="Conference Room or meet.google.com/..." value="{{ form_values.location }}" class="form-input">
                 </div>
             </div>
         </div>
@@ -96,8 +113,12 @@
             <input type="hidden" name="event_id" value="{{ event_id }}">
         {% endif %}
         <div class="create-footer">
-            <button type="submit" class="primary-btn">
-                {% if mode == 'update' %}Update{% else %}Create{% endif %}
+            <a href="{% url 'google_cal_sync:dashboard' %}" class="ghost-btn btn-cancel">
+                Cancel
+            </a>
+            <button type="submit" class="primary-btn btn-submit">
+                <span class="btn-icon">{% if mode == 'update' %}💾{% else %}✨{% endif %}</span>
+                <span>{% if mode == 'update' %}Update Event{% else %}Create Event{% endif %}</span>
             </button>
         </div>
     </form>

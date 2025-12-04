@@ -13,7 +13,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 import dj_database_url
+from dotenv import load_dotenv
 
+load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -168,7 +170,7 @@ STORAGES = {
 }
 
 # Session configuration for OAuth
-SESSION_COOKIE_SECURE = not DEBUG  # True in production with HTTPS
+# SESSION_COOKIE_SECURE will be set in production settings below
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'  # Allows redirects from Google
 SESSION_SAVE_EVERY_REQUEST = True  # Save session on every request
@@ -180,7 +182,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # Production Security Settings
-if not DEBUG:
+# Only enable HTTPS redirect in production when behind a proxy (like Render)
+# Check if we're in production by looking for DATABASE_URL or specific production indicators
+IS_PRODUCTION = os.getenv('RENDER', '').lower() == 'true'
+
+if not DEBUG and IS_PRODUCTION:
+    # Only redirect to HTTPS if we're actually behind a proxy that handles SSL
+    # Render automatically handles SSL termination, so we trust the X-Forwarded-Proto header
     SECURE_SSL_REDIRECT = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     CSRF_COOKIE_SECURE = True
@@ -190,6 +198,14 @@ if not DEBUG:
     X_FRAME_OPTIONS = 'DENY'
     
     # Add your Render domain to CSRF trusted origins
-    CSRF_TRUSTED_ORIGINS = [
-        'https://*.onrender.com',
-    ]
+    render_domain = os.getenv('RENDER_EXTERNAL_URL', '')
+    csrf_origins = ['https://*.onrender.com']
+    if render_domain:
+        csrf_origins.append(render_domain)
+    CSRF_TRUSTED_ORIGINS = csrf_origins
+else:
+    # Development: Disable HTTPS redirect
+    SECURE_SSL_REDIRECT = False
+    SECURE_PROXY_SSL_HEADER = None
+    CSRF_COOKIE_SECURE = False
+    SESSION_COOKIE_SECURE = False

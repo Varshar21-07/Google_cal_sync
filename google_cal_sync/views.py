@@ -190,6 +190,40 @@ def dashboard_view(request):
                     primary_calendar = next((cal for cal in calendars if cal.get('primary')), None)
                     calendar_id = primary_calendar.get('id') if primary_calendar else 'primary'
                     events = fetch_calendar_events(service, calendar_id=calendar_id, max_results=5)
+
+                    # Pre-process events to add parsed datetime objects for template
+                    for event in events:
+                        start = event.get('start', {})
+                        # Parse start time
+                        if start.get('dateTime'):
+                            try:
+                                dt = datetime.fromisoformat(start['dateTime'].replace('Z', '+00:00'))
+                                event['start_dt'] = dt
+                            except ValueError:
+                                event['start_dt'] = None
+                        elif start.get('date'):
+                            try:
+                                dt = datetime.strptime(start['date'], '%Y-%m-%d')
+                                event['start_dt'] = dt
+                            except ValueError:
+                                event['start_dt'] = None
+                    
+                    # Pre-process events to add parsed datetime objects for template
+                    for event in events:
+                        start = event.get('start', {})
+                        # Parse start time
+                        if start.get('dateTime'):
+                            try:
+                                dt = datetime.fromisoformat(start['dateTime'].replace('Z', '+00:00'))
+                                event['start_dt'] = dt
+                            except ValueError:
+                                event['start_dt'] = None
+                        elif start.get('date'):
+                            try:
+                                dt = datetime.strptime(start['date'], '%Y-%m-%d')
+                                event['start_dt'] = dt
+                            except ValueError:
+                                event['start_dt'] = None
                 except HttpError as error:
                     api_error = f"Google API error: {error}"
             else:
@@ -449,6 +483,40 @@ def upcoming_events_view(request):
                         calendar_id=selected_calendar,
                         max_results=20,
                     )
+
+                    # Pre-process events to add parsed datetime objects for template
+                    for event in events:
+                        start = event.get('start', {})
+                        # Parse start time
+                        if start.get('dateTime'):
+                            try:
+                                dt = datetime.fromisoformat(start['dateTime'].replace('Z', '+00:00'))
+                                event['start_dt'] = dt
+                            except ValueError:
+                                event['start_dt'] = None
+                        elif start.get('date'):
+                            try:
+                                dt = datetime.strptime(start['date'], '%Y-%m-%d')
+                                event['start_dt'] = dt
+                            except ValueError:
+                                event['start_dt'] = None
+                    
+                    # Pre-process events to add parsed datetime objects for template
+                    for event in events:
+                        start = event.get('start', {})
+                        # Parse start time
+                        if start.get('dateTime'):
+                            try:
+                                dt = datetime.fromisoformat(start['dateTime'].replace('Z', '+00:00'))
+                                event['start_dt'] = dt
+                            except ValueError:
+                                event['start_dt'] = None
+                        elif start.get('date'):
+                            try:
+                                dt = datetime.strptime(start['date'], '%Y-%m-%d')
+                                event['start_dt'] = dt
+                            except ValueError:
+                                event['start_dt'] = None
                 except HttpError as error:
                     api_error = f"Google API error: {error}"
             else:
@@ -470,6 +538,7 @@ def settings_view(request):
     token_status = "Not connected"
     primary_calendar = None
     api_error = None
+    user_email = None
 
     if request.user.is_authenticated:
         try:
@@ -480,22 +549,53 @@ def settings_view(request):
             else:
                 token_status = "Expired"
 
-            service = authenticate_with_google(request.user)
-            if service:
-                calendars = fetch_calendar_list(service)
-                primary_calendar = next((cal for cal in calendars if cal.get('primary')), None)
+            # Try to get service and calendar info, but handle network errors gracefully
+            try:
+                service = authenticate_with_google(request.user)
+                if service:
+                    try:
+                        calendars = fetch_calendar_list(service)
+                        primary_calendar = next((cal for cal in calendars if cal.get('primary')), None)
+                        # Try to get user email from primary calendar
+                        if primary_calendar:
+                            user_email = primary_calendar.get('id', '').split('@')[0] if '@' in primary_calendar.get('id', '') else None
+                    except HttpError as error:
+                        api_error = f"Google API error: {error}"
+                    except Exception as e:
+                        # Handle network errors gracefully
+                        api_error = f"Unable to connect to Google services. Please check your internet connection."
+            except Exception as e:
+                # Handle network errors (TransportError, etc.)
+                api_error = f"Unable to connect to Google services. Please check your internet connection."
         except GoogleToken.DoesNotExist:
             pass
-        except HttpError as error:
-            api_error = f"Google API error: {error}"
 
     context = {
         'has_token': has_token,
         'token_status': token_status,
         'primary_calendar': primary_calendar,
         'api_error': api_error,
+        'user_email': user_email,
     }
     return render(request, "google_cal_sync/settings.html", context)
+
+
+def switch_account_view(request):
+    """Disconnect current Google account and allow user to connect a different one."""
+    if not request.user.is_authenticated:
+        messages.error(request, "Please login first.")
+        return redirect('google_cal_sync:login')
+    
+    try:
+        google_token = GoogleToken.objects.get(user=request.user)
+        google_token.delete()
+        messages.success(request, "Google account disconnected successfully. You can now connect a different account.")
+    except GoogleToken.DoesNotExist:
+        messages.info(request, "No Google account connected.")
+    except Exception as e:
+        messages.error(request, f"Error disconnecting account: {str(e)}")
+    
+    return redirect('google_cal_sync:settings')
 
 
 def logout_view(request):
